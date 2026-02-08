@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>測試清單和總計樣式</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>個人記帳本</h1>
+        
+        <!-- 測試總計顯示樣式 -->
+        <div class="total-display">
+            <p id="totalAmount">今日總計：350 元</p>
+        </div>
+        
+        <div class="input-section">
+            <input type="number" id="amountInput" placeholder="輸入金額" min="1" step="1">
+            <select id="categorySelect">
+                <option value="飲食">飲食</option>
+                <option value="交通">交通</option>
+                <option value="娛樂">娛樂</option>
+            </select>
+            <button id="addBtn">新增支出</button>
+        </div>
+        
+        <!-- 測試清單項目樣式 -->
+        <div id="expenseList">
+            <div class="expense-item">
+                <span>飲食 - 150 元</span>
+                <button class="delete-btn">刪除</button>
+            </div>
+            <div class="expense-item">
+                <span>交通 - 50 元</span>
+                <button class="delete-btn">刪除</button>
+            </div>
+            <div class="expense-item">
+                <span>娛樂 - 150 元</span>
+                <button class="delete-btn">刪除</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="test-list-styles.js"></script>
+</body>
+</html>

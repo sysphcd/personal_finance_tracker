@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基本樣式測試 - Task 2.1</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e7f3ff;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>個人記帳本 - 基本樣式測試 (Task 2.1)</h1>
+    <p>需求：3.1 - 淺灰色背景、容器置中和適當的寬度、字體和顏色設定</p>
+    <div id="test-results"></div>
+    <div id="test-summary" class="summary"></div>
+
+    <!-- 載入要測試的 HTML -->
+    <iframe id="test-frame" src="index.html" style="display: none;"></iframe>
+
+    <script>
+        // 測試結果容器
+        const resultsContainer = document.getElementById('test-results');
+        const summaryContainer = document.getElementById('test-summary');
+        let passCount = 0;
+        let failCount = 0;
+
+        // 測試輔助函式
+        function assert(condition, testName, details = '') {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'test-result';
+            
+            if (condition) {
+                resultDiv.classList.add('pass');
+                resultDiv.textContent = `✓ PASS: ${testName}`;
+                passCount++;
+            } else {
+                resultDiv.classList.add('fail');
+                resultDiv.textContent = `✗ FAIL: ${testName}${details ? ' - ' + details : ''}`;
+                failCount++;
+            }
+            
+            resultsContainer.appendChild(resultDiv);
+        }
+
+        // 等待 iframe 載入完成後執行測試
+        window.addEventListener('load', () => {
+            const iframe = document.getElementById('test-frame');
+            
+            iframe.addEventListener('load', () => {
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                const win = iframe.contentWindow;
+                
+                // 測試 1: 檢查 body 背景色為淺灰色
+                const bodyStyle = win.getComputedStyle(doc.body);
+                const bgColor = bodyStyle.backgroundColor;
+                // #f5f5f5 轉換為 rgb(245, 245, 245)
+                const isLightGray = bgColor === 'rgb(245, 245, 245)' || 
+                                   bgColor === '#f5f5f5' ||
+                                   bgColor.match(/rgb\(24[0-9], 24[0-9], 24[0-9]\)/);
+                assert(
+                    isLightGray,
+                    '頁面背景色為淺灰色 (#f5f5f5)',
+                    `實際值: ${bgColor}`
+                );
+                
+                // 測試 2: 檢查容器存在
+                const container = doc.querySelector('.container');
+                assert(container !== null, '主容器 (.container) 存在');
+                
+                if (container) {
+                    const containerStyle = win.getComputedStyle(container);
+                    
+                    // 測試 3: 檢查容器最大寬度設定
+                    const maxWidth = containerStyle.maxWidth;
+                    const hasMaxWidth = maxWidth !== 'none' && parseInt(maxWidth) > 0;
+                    assert(
+                        hasMaxWidth,
+                        '容器設定了適當的最大寬度',
+                        `實際值: ${maxWidth}`
+                    );
+                    
+                    // 測試 4: 檢查容器水平置中 (margin-left 和 margin-right 為 auto)
+                    const marginLeft = containerStyle.marginLeft;
+                    const marginRight = containerStyle.marginRight;
+                    const isCentered = marginLeft === 'auto' || marginRight === 'auto' ||
+                                      (marginLeft === marginRight && marginLeft !== '0px');
+                    assert(
+                        isCentered,
+                        '容器水平置中 (margin: auto)',
+                        `margin-left: ${marginLeft}, margin-right: ${marginRight}`
+                    );
+                    
+                    // 測試 5: 檢查容器有適當的上下邊距
+                    const marginTop = parseInt(containerStyle.marginTop);
+                    const hasVerticalMargin = marginTop > 0;
+                    assert(
+                        hasVerticalMargin,
+                        '容器有適當的上邊距',
+                        `實際值: ${marginTop}px`
+                    );
+                }
+                
+                // 測試 6: 檢查 body 字體設定
+                const fontFamily = bodyStyle.fontFamily;
+                const hasFontFamily = fontFamily && fontFamily !== '' && fontFamily !== 'initial';
+                assert(
+                    hasFontFamily,
+                    '頁面設定了字體',
+                    `實際值: ${fontFamily}`
+                );
+                
+                // 測試 7: 檢查 body 文字顏色設定
+                const color = bodyStyle.color;
+                // #333 轉換為 rgb(51, 51, 51)
+                const isDarkGray = color === 'rgb(51, 51, 51)' || 
+                                  color === '#333' ||
+                                  color === '#333333' ||
+                                  color.match(/rgb\([0-9]{1,2}, [0-9]{1,2}, [0-9]{1,2}\)/);
+                assert(
+                    isDarkGray,
+                    '頁面文字顏色為深灰色',
+                    `實際值: ${color}`
+                );
+                
+                // 顯示測試摘要
+                const total = passCount + failCount;
+                summaryContainer.textContent = `測試完成：共 ${total} 個測試，${passCount} 個通過，${failCount} 個失敗`;
+                
+                if (failCount === 0) {
+                    summaryContainer.style.backgroundColor = '#d4edda';
+                    summaryContainer.style.color = '#155724';
+                } else {
+                    summaryContainer.style.backgroundColor = '#f8d7da';
+                    summaryContainer.style.color = '#721c24';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>屬性測試：localStorage 往返一致性</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .info {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        #test-results {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .pass {
+            color: green;
+        }
+        .fail {
+            color: red;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>屬性測試：localStorage 往返一致性</h1>
+    
+    <div class="info">
+        <p><strong>Validates: Requirements 5.5</strong></p>
+        <p><strong>屬性 5：localStorage 往返一致性</strong></p>
+        <p>對於任何支出記錄陣列，儲存到 localStorage 後再載入，應該得到相同的資料（保留金額和類別資訊）</p>
+    </div>
+
+    <button onclick="runTests()">執行屬性測試</button>
+    
+    <div id="test-results"></div>
+
+    <script src="script.js"></script>
+    <script>
+        // 簡化版的屬性測試（瀏覽器環境）
+        
+        function generateRandomExpense() {
+            const categories = ['飲食', '交通', '娛樂'];
+            return {
+                id: Math.random().toString(36).substring(2, 15),
+                amount: Math.round((Math.random() * 10000 + 1) * 100) / 100,
+                category: categories[Math.floor(Math.random() * categories.length)]
+            };
+        }
+
+        function generateRandomExpensesArray(maxLength = 50) {
+            const length = Math.floor(Math.random() * (maxLength + 1));
+            const expenses = [];
+            for (let i = 0; i < length; i++) {
+                expenses.push(generateRandomExpense());
+            }
+            return expenses;
+        }
+
+        function testRoundTripConsistency(testExpenses) {
+            // 清空 localStorage
+            localStorage.clear();
+            
+            // 設定 expenses 陣列
+            expenses = testExpenses;
+            
+            // 儲存到 localStorage
+            saveToLocalStorage();
+            
+            // 從 localStorage 載入
+            const loadedExpenses = loadFromLocalStorage();
+            
+            // 驗證陣列長度相同
+            if (loadedExpenses.length !== testExpenses.length) {
+                return {
+                    passed: false,
+                    error: `長度不一致：預期 ${testExpenses.length}，實際 ${loadedExpenses.length}`
+                };
+            }
+            
+            // 驗證每筆記錄的資料一致性
+            for (let i = 0; i < testExpenses.length; i++) {
+                const original = testExpenses[i];
+                const loaded = loadedExpenses[i];
+                
+                // 驗證 id
+                if (loaded.id !== original.id) {
+                    return {
+                        passed: false,
+                        error: `記錄 ${i} 的 id 不一致：預期 '${original.id}'，實際 '${loaded.id}'`
+                    };
+                }
+                
+                // 驗證 amount（考慮浮點數精度）
+                if (Math.abs(loaded.amount - original.amount) > 0.001) {
+                    return {
+                        passed: false,
+                        error: `記錄 ${i} 的 amount 不一致：預期 ${original.amount}，實際 ${loaded.amount}`
+                    };
+                }
+                
+                // 驗證 category
+                if (loaded.category !== original.category) {
+                    return {
+                        passed: false,
+                        error: `記錄 ${i} 的 category 不一致：預期 '${original.category}'，實際 '${loaded.category}'`
+                    };
+                }
+            }
+            
+            return { passed: true };
+        }
+
+        function runTests() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<h2>執行中...</h2>';
+            
+            const numRuns = 100;
+            let passed = 0;
+            let failed = 0;
+            let failedCases = [];
+            
+            for (let i = 0; i < numRuns; i++) {
+                const testExpenses = generateRandomExpensesArray();
+                const result = testRoundTripConsistency(testExpenses);
+                
+                if (result.passed) {
+                    passed++;
+                } else {
+                    failed++;
+                    failedCases.push({
+                        run: i + 1,
+                        expenses: testExpenses,
+                        error: result.error
+                    });
+                }
+            }
+            
+            // 顯示結果
+            let html = '<h2>測試結果</h2>';
+            html += `<p>執行次數：${numRuns}</p>`;
+            html += `<p class="pass">✅ 通過：${passed}</p>`;
+            html += `<p class="fail">❌ 失敗：${failed}</p>`;
+            
+            if (failed === 0) {
+                html += '<h3 class="pass">🎉 所有測試都通過！</h3>';
+            } else {
+                html += '<h3 class="fail">發現問題：</h3>';
+                failedCases.forEach(failedCase => {
+                    html += `<div style="background-color: #ffebee; padding: 10px; margin: 10px 0; border-radius: 5px;">`;
+                    html += `<p><strong>測試 #${failedCase.run}</strong></p>`;
+                    html += `<p>錯誤：${failedCase.error}</p>`;
+                    html += `<p>測試資料：<pre>${JSON.stringify(failedCase.expenses, null, 2)}</pre></p>`;
+                    html += `</div>`;
+                });
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

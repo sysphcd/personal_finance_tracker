@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Test: Display Format Correctness</title>
+    <script src="https://cdn.jsdelivr.net/npm/fast-check/lib/bundle.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>屬性測試：顯示格式正確性</h1>
+        <div id="test-results"></div>
+        <div id="expenseList"></div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        /**
+         * 屬性 2：顯示格式正確性
+         * **Validates: Requirements 4.2**
+         * 
+         * 對於任何支出記錄，顯示的文字應該包含類別、金額和「元」字，
+         * 並符合「分類 - 金額 元」的格式
+         */
+        
+        const resultsDiv = document.getElementById('test-results');
+        
+        function logResult(message, isError = false) {
+            const p = document.createElement('p');
+            p.textContent = message;
+            p.style.color = isError ? 'red' : 'green';
+            p.style.fontWeight = 'bold';
+            resultsDiv.appendChild(p);
+        }
+        
+        // 等待 DOM 完全載入
+        window.addEventListener('load', function() {
+            try {
+                // 定義類別選項
+                const categories = ['飲食', '交通', '娛樂'];
+                
+                // 生成隨機支出記錄
+                const expenseArbitrary = fastcheck.record({
+                    id: fastcheck.string(),
+                    amount: fastcheck.double({ min: 0.01, max: 100000, noNaN: true }),
+                    category: fastcheck.constantFrom(...categories)
+                });
+                
+                // 屬性：顯示格式正確性
+                const displayFormatProperty = fastcheck.property(
+                    expenseArbitrary,
+                    (expense) => {
+                        // 清空清單
+                        const expenseList = document.getElementById('expenseList');
+                        expenseList.innerHTML = '';
+                        
+                        // 渲染支出記錄
+                        renderExpense(expense);
+                        
+                        // 取得渲染的元素
+                        const items = expenseList.querySelectorAll('.expense-item');
+                        
+                        // 應該有一個項目
+                        if (items.length !== 1) {
+                            return false;
+                        }
+                        
+                        // 取得顯示文字
+                        const textSpan = items[0].querySelector('span');
+                        if (!textSpan) {
+                            return false;
+                        }
+                        
+                        const displayText = textSpan.textContent;
+                        
+                        // 驗證格式：「分類 - 金額 元」
+                        // 1. 包含類別
+                        if (!displayText.includes(expense.category)) {
+                            return false;
+                        }
+                        
+                        // 2. 包含金額
+                        if (!displayText.includes(expense.amount.toString())) {
+                            return false;
+                        }
+                        
+                        // 3. 包含「元」字
+                        if (!displayText.includes('元')) {
+                            return false;
+                        }
+                        
+                        // 4. 符合「分類 - 金額 元」的格式
+                        const expectedFormat = `${expense.category} - ${expense.amount} 元`;
+                        if (displayText !== expectedFormat) {
+                            return false;
+                        }
+                        
+                        return true;
+                    }
+                );
+                
+                // 執行測試
+                fastcheck.assert(displayFormatProperty, { numRuns: 100 });
+                
+                logResult('✓ 屬性測試通過：顯示格式正確性（100 次迭代）');
+                console.log('✓ 屬性測試通過：顯示格式正確性');
+                
+            } catch (error) {
+                logResult('✗ 屬性測試失敗：' + error.message, true);
+                console.error('✗ 屬性測試失敗：', error);
+            }
+        });
+    </script>
+</body>
+</html>

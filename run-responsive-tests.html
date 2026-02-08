@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>執行響應式設計測試</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .test-console {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-height: 300px;
+            overflow-y: auto;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 10px;
+            border-top: 2px solid #007acc;
+            z-index: 9999;
+        }
+        .test-console pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        .window-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 9998;
+        }
+    </style>
+</head>
+<body>
+    <div class="window-info">
+        <div>視窗寬度: <span id="windowWidth"></span>px</div>
+        <div>視窗高度: <span id="windowHeight"></span>px</div>
+        <div style="margin-top: 5px; font-size: 11px; color: #ccc;">
+            調整視窗大小以測試響應式設計
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>個人記帳本</h1>
+        
+        <div class="total-display">
+            <p id="totalAmount">今日總計：0 元</p>
+        </div>
+        
+        <div class="input-section">
+            <input type="number" id="amountInput" placeholder="輸入金額" min="1" step="1">
+            <select id="categorySelect">
+                <option value="飲食">飲食</option>
+                <option value="交通">交通</option>
+                <option value="娛樂">娛樂</option>
+            </select>
+            <button id="addBtn">新增支出</button>
+        </div>
+        
+        <div id="expenseList">
+            <!-- 範例記錄用於測試 -->
+            <div class="expense-item">
+                <span>飲食 - 150 元</span>
+                <button class="delete-btn">刪除</button>
+            </div>
+            <div class="expense-item">
+                <span>交通 - 50 元</span>
+                <button class="delete-btn">刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-console">
+        <pre id="consoleOutput">正在執行測試...</pre>
+    </div>
+
+    <script>
+        // 攔截 console.log 並顯示在頁面上
+        const consoleOutput = document.getElementById('consoleOutput');
+        const originalLog = console.log;
+        const originalError = console.error;
+        let output = '';
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            output += args.join(' ') + '\n';
+            consoleOutput.textContent = output;
+            consoleOutput.parentElement.scrollTop = consoleOutput.parentElement.scrollHeight;
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            output += 'ERROR: ' + args.join(' ') + '\n';
+            consoleOutput.textContent = output;
+            consoleOutput.parentElement.scrollTop = consoleOutput.parentElement.scrollHeight;
+        };
+
+        // 更新視窗尺寸
+        function updateWindowSize() {
+            document.getElementById('windowWidth').textContent = window.innerWidth;
+            document.getElementById('windowHeight').textContent = window.innerHeight;
+        }
+
+        window.addEventListener('resize', () => {
+            updateWindowSize();
+            // 視窗大小改變時重新執行測試
+            output = '';
+            setTimeout(() => {
+                if (typeof runAllTests === 'function') {
+                    runAllTests();
+                }
+            }, 100);
+        });
+        
+        updateWindowSize();
+    </script>
+    
+    <!-- 載入測試腳本 -->
+    <script src="test-responsive.js"></script>
+</body>
+</html>

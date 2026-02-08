@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM 元素測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .pass {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .fail {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e7f3ff;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>個人記帳本 - DOM 元素單元測試</h1>
+    <div id="test-results"></div>
+    <div id="test-summary" class="summary"></div>
+
+    <!-- 載入要測試的 HTML -->
+    <iframe id="test-frame" src="index.html" style="display: none;"></iframe>
+
+    <script>
+        // 測試結果容器
+        const resultsContainer = document.getElementById('test-results');
+        const summaryContainer = document.getElementById('test-summary');
+        let passCount = 0;
+        let failCount = 0;
+
+        // 測試輔助函式
+        function assert(condition, testName) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'test-result';
+            
+            if (condition) {
+                resultDiv.classList.add('pass');
+                resultDiv.textContent = `✓ PASS: ${testName}`;
+                passCount++;
+            } else {
+                resultDiv.classList.add('fail');
+                resultDiv.textContent = `✗ FAIL: ${testName}`;
+                failCount++;
+            }
+            
+            resultsContainer.appendChild(resultDiv);
+        }
+
+        // 等待 iframe 載入完成後執行測試
+        window.addEventListener('load', () => {
+            const iframe = document.getElementById('test-frame');
+            
+            iframe.addEventListener('load', () => {
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                // 測試 1: 檢查 amountInput 元素存在
+                const amountInput = doc.getElementById('amountInput');
+                assert(amountInput !== null, '金額輸入欄位 (amountInput) 存在');
+                
+                // 測試 2: 檢查 amountInput 的 type 屬性
+                assert(
+                    amountInput && amountInput.type === 'number',
+                    'amountInput 的 type 屬性為 "number"'
+                );
+                
+                // 測試 3: 檢查 categorySelect 元素存在
+                const categorySelect = doc.getElementById('categorySelect');
+                assert(categorySelect !== null, '類別下拉選單 (categorySelect) 存在');
+                
+                // 測試 4: 檢查 categorySelect 包含三個選項
+                assert(
+                    categorySelect && categorySelect.options.length === 3,
+                    'categorySelect 包含三個選項'
+                );
+                
+                // 測試 5: 檢查第一個選項是「飲食」
+                assert(
+                    categorySelect && categorySelect.options[0].value === '飲食',
+                    '第一個選項是「飲食」'
+                );
+                
+                // 測試 6: 檢查第二個選項是「交通」
+                assert(
+                    categorySelect && categorySelect.options[1].value === '交通',
+                    '第二個選項是「交通」'
+                );
+                
+                // 測試 7: 檢查第三個選項是「娛樂」
+                assert(
+                    categorySelect && categorySelect.options[2].value === '娛樂',
+                    '第三個選項是「娛樂」'
+                );
+                
+                // 測試 8: 檢查 addBtn 元素存在
+                const addBtn = doc.getElementById('addBtn');
+                assert(addBtn !== null, '新增按鈕 (addBtn) 存在');
+                
+                // 測試 9: 檢查 expenseList 元素存在
+                const expenseList = doc.getElementById('expenseList');
+                assert(expenseList !== null, '支出清單容器 (expenseList) 存在');
+                
+                // 測試 10: 檢查標題存在且內容正確
+                const title = doc.querySelector('h1');
+                assert(
+                    title && title.textContent === '個人記帳本',
+                    '標題「個人記帳本」存在'
+                );
+                
+                // 測試 11: 檢查今日總計顯示元素存在
+                const totalDisplay = doc.querySelector('.total-display');
+                assert(totalDisplay !== null, '今日總計顯示區域存在');
+                
+                // 測試 12: 檢查 CSS 檔案已載入
+                const linkElement = doc.querySelector('link[href="style.css"]');
+                assert(linkElement !== null, 'CSS 檔案 (style.css) 已正確引用');
+                
+                // 測試 13: 檢查 JavaScript 檔案已載入
+                const scriptElement = doc.querySelector('script[src="script.js"]');
+                assert(scriptElement !== null, 'JavaScript 檔案 (script.js) 已正確引用');
+                
+                // 顯示測試摘要
+                const total = passCount + failCount;
+                summaryContainer.textContent = `測試完成：共 ${total} 個測試，${passCount} 個通過，${failCount} 個失敗`;
+                
+                if (failCount === 0) {
+                    summaryContainer.style.backgroundColor = '#d4edda';
+                    summaryContainer.style.color = '#155724';
+                } else {
+                    summaryContainer.style.backgroundColor = '#f8d7da';
+                    summaryContainer.style.color = '#721c24';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

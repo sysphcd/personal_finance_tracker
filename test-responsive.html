@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>響應式設計測試</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .test-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        .test-results {
+            margin: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+        .test-pass {
+            color: green;
+            font-weight: bold;
+        }
+        .test-fail {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <div>視窗寬度: <span id="windowWidth"></span>px</div>
+        <div>視窗高度: <span id="windowHeight"></span>px</div>
+    </div>
+
+    <div class="container">
+        <h1>個人記帳本</h1>
+        
+        <div class="total-display">
+            <p id="totalAmount">今日總計：0 元</p>
+        </div>
+        
+        <div class="input-section">
+            <input type="number" id="amountInput" placeholder="輸入金額" min="1" step="1">
+            <select id="categorySelect">
+                <option value="飲食">飲食</option>
+                <option value="交通">交通</option>
+                <option value="娛樂">娛樂</option>
+            </select>
+            <button id="addBtn">新增支出</button>
+        </div>
+        
+        <div id="expenseList">
+            <div class="expense-item">
+                <span>飲食 - 150 元</span>
+                <button class="delete-btn">刪除</button>
+            </div>
+            <div class="expense-item">
+                <span>交通 - 50 元</span>
+                <button class="delete-btn">刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-results">
+        <h2>響應式設計測試結果</h2>
+        <div id="testResults"></div>
+    </div>
+
+    <script>
+        // 更新視窗尺寸顯示
+        function updateWindowSize() {
+            document.getElementById('windowWidth').textContent = window.innerWidth;
+            document.getElementById('windowHeight').textContent = window.innerHeight;
+        }
+
+        window.addEventListener('resize', updateWindowSize);
+        updateWindowSize();
+
+        // 測試響應式設計
+        function runResponsiveTests() {
+            const results = [];
+            const width = window.innerWidth;
+
+            // 測試 1: 檢查視窗 meta 標籤
+            const viewport = document.querySelector('meta[name="viewport"]');
+            results.push({
+                name: '視窗 meta 標籤存在',
+                pass: viewport !== null && viewport.content.includes('width=device-width')
+            });
+
+            // 測試 2: 檢查容器在小螢幕上的樣式
+            const container = document.querySelector('.container');
+            const containerStyle = window.getComputedStyle(container);
+            
+            if (width <= 768) {
+                results.push({
+                    name: '小螢幕時容器有適當的邊距',
+                    pass: parseInt(containerStyle.marginLeft) <= 20 && parseInt(containerStyle.marginRight) <= 20
+                });
+            }
+
+            // 測試 3: 檢查輸入區域在小螢幕上的佈局
+            const inputSection = document.querySelector('.input-section');
+            const inputStyle = window.getComputedStyle(inputSection);
+            
+            if (width <= 768) {
+                results.push({
+                    name: '小螢幕時輸入區域為垂直排列',
+                    pass: inputStyle.flexDirection === 'column'
+                });
+            }
+
+            // 測試 4: 檢查按鈕和輸入欄位的觸控目標尺寸
+            const addBtn = document.getElementById('addBtn');
+            const btnStyle = window.getComputedStyle(addBtn);
+            const btnHeight = parseInt(btnStyle.height);
+            
+            if (width <= 768) {
+                results.push({
+                    name: '按鈕高度符合觸控目標最小尺寸 (≥44px)',
+                    pass: btnHeight >= 44
+                });
+            }
+
+            // 測試 5: 檢查輸入欄位在小螢幕上為全寬
+            const amountInput = document.getElementById('amountInput');
+            const inputWidth = window.getComputedStyle(amountInput);
+            
+            if (width <= 768) {
+                results.push({
+                    name: '小螢幕時輸入欄位為全寬',
+                    pass: inputWidth.width === '100%' || parseInt(inputWidth.width) >= container.offsetWidth * 0.9
+                });
+            }
+
+            // 測試 6: 檢查字體大小防止 iOS 自動縮放
+            const inputFontSize = parseInt(window.getComputedStyle(amountInput).fontSize);
+            
+            if (width <= 768) {
+                results.push({
+                    name: '輸入欄位字體大小 ≥16px (防止 iOS 縮放)',
+                    pass: inputFontSize >= 16
+                });
+            }
+
+            // 顯示測試結果
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = results.map(result => 
+                `<div class="${result.pass ? 'test-pass' : 'test-fail'}">
+                    ${result.pass ? '✓' : '✗'} ${result.name}
+                </div>`
+            ).join('');
+
+            // 顯示總結
+            const passCount = results.filter(r => r.pass).length;
+            const totalCount = results.length;
+            resultsDiv.innerHTML += `<div style="margin-top: 15px; font-weight: bold;">
+                通過: ${passCount}/${totalCount} 測試
+            </div>`;
+
+            // 顯示建議
+            if (width > 768) {
+                resultsDiv.innerHTML += `<div style="margin-top: 15px; color: #666;">
+                    提示: 請調整瀏覽器視窗寬度至 768px 以下以測試行動裝置響應式設計
+                </div>`;
+            }
+        }
+
+        // 執行測試
+        window.addEventListener('load', runResponsiveTests);
+        window.addEventListener('resize', runResponsiveTests);
+    </script>
+</body>
+</html>

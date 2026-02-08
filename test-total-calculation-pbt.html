@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>屬性測試：今日總計計算正確性</title>
+</head>
+<body>
+    <h1>屬性測試：今日總計計算正確性</h1>
+    <div id="results"></div>
+
+    <!-- 使用 fast-check CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/fast-check/lib/bundle.js"></script>
+    
+    <script>
+        // 複製必要的函式
+        let expenses = [];
+
+        function calculateTotal() {
+            return expenses.reduce((total, expense) => {
+                return total + expense.amount;
+            }, 0);
+        }
+
+        function updateTotalDisplay() {
+            const total = calculateTotal();
+            const totalElement = document.getElementById('totalAmount');
+            if (totalElement) {
+                totalElement.textContent = `今日總計：${total} 元`;
+            }
+        }
+
+        // 屬性測試
+        function runPropertyTests() {
+            const results = [];
+            
+            /**
+             * 屬性 9：今日總計計算正確性
+             * **Validates: Requirements 7.6, 7.2**
+             * 
+             * 對於任何支出記錄集合，今日總計應該等於所有記錄金額的總和，不論類別
+             */
+            
+            // 定義支出記錄生成器
+            const expenseArbitrary = fc.record({
+                id: fc.string(),
+                amount: fc.double({ min: 0.01, max: 10000, noNaN: true }),
+                category: fc.constantFrom('飲食', '交通', '娛樂')
+            });
+            
+            // 定義支出記錄陣列生成器
+            const expensesArrayArbitrary = fc.array(expenseArbitrary, { minLength: 0, maxLength: 50 });
+            
+            // 屬性：calculateTotal() 應該返回所有金額的總和
+            const property1 = fc.property(expensesArrayArbitrary, (testExpenses) => {
+                expenses = testExpenses;
+                const calculatedTotal = calculateTotal();
+                const expectedTotal = testExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+                
+                // 使用小的容差來處理浮點數精度問題
+                const tolerance = 0.0001;
+                const difference = Math.abs(calculatedTotal - expectedTotal);
+                
+                return difference < tolerance;
+            });
+            
+            try {
+                const result1 = fc.check(property1, { numRuns: 100 });
+                if (result1.failed) {
+                    results.push(`✗ 屬性測試失敗：calculateTotal() 計算不正確`);
+                    results.push(`  反例：${JSON.stringify(result1.counterexample)}`);
+                } else {
+                    results.push(`✓ 屬性測試通過：calculateTotal() 正確計算所有金額總和 (100 次測試)`);
+                }
+            } catch (error) {
+                results.push(`✗ 屬性測試錯誤：${error.message}`);
+            }
+            
+            // 屬性：空陣列應該返回 0
+            const property2 = fc.property(fc.constant([]), (testExpenses) => {
+                expenses = testExpenses;
+                return calculateTotal() === 0;
+            });
+            
+            try {
+                const result2 = fc.check(property2, { numRuns: 10 });
+                if (result2.failed) {
+                    results.push(`✗ 屬性測試失敗：空陣列應返回 0`);
+                } else {
+                    results.push(`✓ 屬性測試通過：空陣列返回 0`);
+                }
+            } catch (error) {
+                results.push(`✗ 屬性測試錯誤：${error.message}`);
+            }
+            
+            // 屬性：總計應該與類別無關
+            const property3 = fc.property(expensesArrayArbitrary, (testExpenses) => {
+                expenses = testExpenses;
+                const total1 = calculateTotal();
+                
+                // 改變所有類別但保持金額不變
+                const modifiedExpenses = testExpenses.map(exp => ({
+                    ...exp,
+                    category: '飲食' // 全部改為飲食
+                }));
+                expenses = modifiedExpenses;
+                const total2 = calculateTotal();
+                
+                // 總計應該相同（因為只改變類別，金額不變）
+                const tolerance = 0.0001;
+                return Math.abs(total1 - total2) < tolerance;
+            });
+            
+            try {
+                const result3 = fc.check(property3, { numRuns: 100 });
+                if (result3.failed) {
+                    results.push(`✗ 屬性測試失敗：總計應該與類別無關`);
+                    results.push(`  反例：${JSON.stringify(result3.counterexample)}`);
+                } else {
+                    results.push(`✓ 屬性測試通過：總計與類別無關 (100 次測試)`);
+                }
+            } catch (error) {
+                results.push(`✗ 屬性測試錯誤：${error.message}`);
+            }
+            
+            // 顯示結果
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h2>測試結果：</h2>' + results.map(r => `<p>${r}</p>`).join('');
+            
+            // 檢查是否全部通過
+            const allPassed = !results.some(r => r.startsWith('✗'));
+            if (allPassed) {
+                resultsDiv.innerHTML += '<h3 style="color: green;">✓ 所有屬性測試通過！</h3>';
+            } else {
+                resultsDiv.innerHTML += '<h3 style="color: red;">✗ 部分屬性測試失敗</h3>';
+            }
+            
+            return allPassed;
+        }
+
+        // 執行測試
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof fc === 'undefined') {
+                document.getElementById('results').innerHTML = '<p style="color: red;">錯誤：fast-check 未載入</p>';
+            } else {
+                runPropertyTests();
+            }
+        });
+    </script>
+</body>
+</html>

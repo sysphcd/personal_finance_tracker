@@ -1,0 +1,15 @@
+{
+  "name": "personal-expense-tracker-tests",
+  "version": "1.0.0",
+  "description": "Testing dependencies for personal expense tracker",
+  "private": true,
+  "devDependencies": {
+    "fast-check": "^3.23.2"
+  },
+  "scripts": {
+    "test:pbt-roundtrip": "node test-localstorage-roundtrip-pbt.js"
+  },
+  "dependencies": {
+    "jsdom": "^28.0.0"
+  }
+}

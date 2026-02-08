@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人記帳本</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>個人記帳本</h1>
+        
+        <div class="total-display">
+            <p id="totalAmount">今日總計：0 元</p>
+        </div>
+        
+        <div class="input-section">
+            <input type="number" id="amountInput" placeholder="輸入金額" min="1" step="1">
+            <select id="categorySelect">
+                <option value="飲食">飲食</option>
+                <option value="交通">交通</option>
+                <option value="娛樂">娛樂</option>
+            </select>
+            <button id="addBtn">新增支出</button>
+        </div>
+        
+        <div id="expenseList"></div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

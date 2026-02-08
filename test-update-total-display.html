@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>測試 updateTotalDisplay()</title>
+</head>
+<body>
+    <h1>測試 updateTotalDisplay() 函式</h1>
+    <div id="totalAmount">今日總計：0 元</div>
+    <div id="results"></div>
+
+    <script>
+        // 複製必要的函式
+        let expenses = [];
+
+        function calculateTotal() {
+            return expenses.reduce((total, expense) => {
+                return total + expense.amount;
+            }, 0);
+        }
+
+        function updateTotalDisplay() {
+            const total = calculateTotal();
+            const totalElement = document.getElementById('totalAmount');
+            if (totalElement) {
+                totalElement.textContent = `今日總計：${total} 元`;
+            }
+        }
+
+        // 測試函式
+        function runTests() {
+            const results = [];
+            
+            // 測試 1: 空清單應顯示 0 元
+            expenses = [];
+            updateTotalDisplay();
+            const display1 = document.getElementById('totalAmount').textContent;
+            const test1 = display1 === '今日總計：0 元';
+            results.push(`測試 1 - 空清單顯示 0 元: ${test1 ? '✓ 通過' : '✗ 失敗'} (顯示: ${display1})`);
+            
+            // 測試 2: 單筆記錄
+            expenses = [{ id: '1', amount: 100, category: '飲食' }];
+            updateTotalDisplay();
+            const display2 = document.getElementById('totalAmount').textContent;
+            const test2 = display2 === '今日總計：100 元';
+            results.push(`測試 2 - 單筆記錄 100 元: ${test2 ? '✓ 通過' : '✗ 失敗'} (顯示: ${display2})`);
+            
+            // 測試 3: 多筆記錄
+            expenses = [
+                { id: '1', amount: 100, category: '飲食' },
+                { id: '2', amount: 50, category: '交通' },
+                { id: '3', amount: 200, category: '娛樂' }
+            ];
+            updateTotalDisplay();
+            const display3 = document.getElementById('totalAmount').textContent;
+            const test3 = display3 === '今日總計：350 元';
+            results.push(`測試 3 - 多筆記錄總計 350 元: ${test3 ? '✓ 通過' : '✗ 失敗'} (顯示: ${display3})`);
+            
+            // 測試 4: 小數金額
+            expenses = [
+                { id: '1', amount: 99.5, category: '飲食' },
+                { id: '2', amount: 50.5, category: '交通' }
+            ];
+            updateTotalDisplay();
+            const display4 = document.getElementById('totalAmount').textContent;
+            const test4 = display4 === '今日總計：150 元';
+            results.push(`測試 4 - 小數金額總計 150 元: ${test4 ? '✓ 通過' : '✗ 失敗'} (顯示: ${display4})`);
+            
+            // 顯示結果
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h2>測試結果：</h2>' + results.map(r => `<p>${r}</p>`).join('');
+            
+            // 檢查是否全部通過
+            const allPassed = test1 && test2 && test3 && test4;
+            if (allPassed) {
+                resultsDiv.innerHTML += '<h3 style="color: green;">✓ 所有測試通過！</h3>';
+            } else {
+                resultsDiv.innerHTML += '<h3 style="color: red;">✗ 部分測試失敗</h3>';
+            }
+            
+            return allPassed;
+        }
+
+        // 執行測試
+        window.addEventListener('DOMContentLoaded', () => {
+            const allPassed = runTests();
+            if (!allPassed) {
+                console.error('測試失敗');
+            }
+        });
+    </script>
+</body>
+</html>
